@@ -43,6 +43,6 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     keywords='technische alternative, dlogg, d-logg, d logg',
-    packages=['dlogg'],
-    install_requires=['enum34', 'pyserial'],
+    packages=['dlogg', 'dlogg_db'],
+    install_requires=['enum34', 'pyserial', 'mysql-python'],
 )
