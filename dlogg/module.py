@@ -85,6 +85,12 @@ class DLoggModule(object):
         if data[0] != Cmd.END_READ:
             raise IOError("Unexpected response")
 
+    def clear_memory(self):
+        data = self._transceive([Cmd.CLEAR_MEMORY], 1)
+        if data[0] != Cmd.CLEAR_MEMORY:
+            raise IOError("Unexpected response")
+        log.debug("Memory cleared")
+
     def _transceive(self, tx_data, rx_len, add_checksum=False):
         if add_checksum:
             tx_data += [sum(tx_data) % 0x100]
@@ -109,5 +115,6 @@ if __name__ == "__main__":
         # log.info("Current data: {}".format(device.get_current_data()))
         log.info("Data 0: {}".format(device.fetch_data(header.start)))
         device.fetch_end()
+        #device.clear_memory()
         # all_data = device.fetch_data_range(header.start, header.get_sample_count())
         # log.info("Fetched {} samples".format(header.get_sample_count()))
