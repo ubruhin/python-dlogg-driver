@@ -60,6 +60,31 @@ class DLoggModule(object):
         time.sleep(0.1)  # reading the header does not work without this...
         return OneDlHeader(self._transceive([Cmd.GET_HEADER], 13))
 
+    # def get_current_data(self):
+    #     data = self._transceive([Cmd.GET_CURRENT_DATA], 57)
+    #     if data[0] != 0x80:
+    #         raise IOError("Unexpected response")
+    #     return data
+
+    def fetch_data(self, address):
+        tx_data = [Cmd.GET_DATA_RANGE]
+        tx_data += address.array
+        tx_data += [0x01]   # count of data frames to read(?)
+        return Uvr1611Data(self._transceive(tx_data, 65, add_checksum=True))
+
+    def fetch_data_range(self, start_addr, length):
+        data = []
+        for i in range(0, length):
+            addr = OneDlAddress((start_addr.integer + i) % 8192)
+            data.append(self.fetch_data(addr))
+            log.debug("Fetched data from address {}".format(addr))
+        return data
+
+    def fetch_end(self):
+        data = self._transceive([Cmd.END_READ], 1)
+        if data[0] != Cmd.END_READ:
+            raise IOError("Unexpected response")
+
     def _transceive(self, tx_data, rx_len, add_checksum=False):
         if add_checksum:
             tx_data += [sum(tx_data) % 0x100]
@@ -80,3 +105,9 @@ if __name__ == "__main__":
         log.info("Type: {}".format(device.get_type()))
         header = device.get_header()
         log.info("Header: {}".format(header))
+        log.info("Number of samples: {}".format(header.get_sample_count()))
+        # log.info("Current data: {}".format(device.get_current_data()))
+        log.info("Data 0: {}".format(device.fetch_data(header.start)))
+        device.fetch_end()
+        # all_data = device.fetch_data_range(header.start, header.get_sample_count())
+        # log.info("Fetched {} samples".format(header.get_sample_count()))

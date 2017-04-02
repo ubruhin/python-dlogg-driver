@@ -93,6 +93,97 @@ class OneDlHeader(object):
         return str
 
 
+class DateTime(object):
+    def __init__(self, raw_data):
+        self.seconds = raw_data[0]
+        self.minutes = raw_data[1]
+        self.hours = raw_data[2]
+        self.day = raw_data[3]
+        self.month = raw_data[4]
+        self.year = 2000 + raw_data[5]
+
+    def __str__(self):
+        return "{}-{}-{}_{}:{}:{}".format(self.year, self.month, self.day,
+                                          self.hours, self.minutes, self.seconds)
+
+
+class InputData(object):
+    def __init__(self, raw_data):
+        self.type = raw_data[1] >> 4
+        self.raw_value = (unpack("<h", raw_data)[0] & 0x0FFF)
+        if self.type == 0:  # not used (?)
+            self.value = 0
+            self.unit = ""
+        elif self.type == 2 or self.type == 7:  # temperature
+            self.value = self.raw_value / 10.0
+            self.unit = "°C"
+        elif self.type == 10 or self.type == 15:  # minus temperature
+            self.value = self.raw_value / -10.0
+            self.unit = "°C"
+        elif self.type == 3:  # volume per time
+            self.value = self.raw_value * 4.0
+            self.unit = "l/h"
+        else:
+            raise Exception("Unknown input type: {}".format(self.type))
+
+    def __str__(self):
+        # return "[{}] {} -> {}{}".format(self.type, self.raw_value, self.value, self.unit)
+        return "{}{}".format(self.value, self.unit)
+
+
+class PumpSpeed(object):
+    def __init__(self, raw_data):
+        self.value = raw_data & 0x1F
+        self.unit = 'rpm'
+
+    def __str__(self):
+        return "{}{}".format(self.value, self.unit)
+
+
+class Uvr1611Data(object):
+    def __init__(self, raw_data):
+        self.raw = bytearray(raw_data)
+        self.inputs = list()
+        for i in range(0, 16):
+            self.inputs.append(InputData(raw_data[i*2:i*2+2]))
+        self.outputs = list()
+        for i in range(0, 13):
+            self.outputs.append(True if unpack("<H", raw_data[32:34])[0] & 1 << i else False)
+        self.pump_speeds = list()
+        for i in range(0, 4):
+            self.pump_speeds.append(PumpSpeed(raw_data[34+i]))
+        # self.wmz_active = raw_data[38]
+        # self.solar_1_power = unpack(">I", raw_data[39:43])
+        # self.solar_1_kwh = unpack(">H", raw_data[43:45])
+        # self.solar_1_mwh = unpack(">H", raw_data[45:47])
+        # self.solar_2_power = unpack(">I", raw_data[47:51])
+        # self.solar_2_kwh = unpack(">H", raw_data[51:53])
+        # self.solar_2_mwh = unpack(">H", raw_data[53:55])
+        self.datetime = DateTime(raw_data[55:61])
+        self.timestamp = unpack("<I", raw_data[61:64] + bytearray([0]))[0]
+        checksum = raw_data[64]
+        checksum_calc = sum(raw_data[0:64]) % 0x100
+        if checksum != checksum_calc:
+            raise IOError("Checksum mismatch in header")
+
+    def __str__(self):
+        str = "{\n"
+        str += "  datetime:     {}\n".format(self.datetime)
+        str += "  timestamp:    {}\n".format(self.timestamp)
+        str += "  inputs:       {}\n".format([x.value for x in self.inputs])
+        str += "  outputs:      {}\n".format([x for x in self.outputs])
+        str += "  pump_speeds:  {}\n".format([x.value for x in self.pump_speeds])
+        # str += "  wmz_active: {}\n".format(self.wmz_active)
+        # str += "  solar_1_power: {}\n".format(self.solar_1_power)
+        # str += "  solar_1_kwh: {}\n".format(self.solar_1_kwh)
+        # str += "  solar_1_mwh: {}\n".format(self.solar_1_mwh)
+        # str += "  solar_2_power: {}\n".format(self.solar_2_power)
+        # str += "  solar_2_kwh: {}\n".format(self.solar_2_kwh)
+        # str += "  solar_2_mwh: {}\n".format(self.solar_2_mwh)
+        str += "}"
+        return str
+
+
 if __name__ == "__main__":
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=logging.DEBUG)
 
