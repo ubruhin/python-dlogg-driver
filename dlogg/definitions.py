@@ -27,6 +27,9 @@ log.setLevel(logging.DEBUG)
 
 class Cmd(int):
     GET_MODE = 0x81
+    GET_FIRMWARE_VERSION = 0x82
+    GET_LOGGING_CRITERION = 0x95
+    SET_LOGGING_CRITERION = 0x96
     GET_HEADER = 0xAA
     GET_CURRENT_DATA = 0xAB
     GET_DATA_RANGE = 0xAC
@@ -34,15 +37,42 @@ class Cmd(int):
     CLEAR_MEMORY = 0xAF
 
 
+class Type(Enum):
+    BL232 = 0xA2
+    BLNET = 0xA3
+    BL232_DLOGG_1DL = 0xA8
+    BL232_DLOGG_2DL = 0xD1
+
+
 class Mode(Enum):
+    BL232 = 0xA2
     ONE_DL = 0xA8
     TWO_DL = 0xD1
     CAN = 0xDC
 
 
-class UvrType(Enum):
-    UVR61_3 = 0x5A
-    UVR1611 = 0x76
+#class ControllerDeviceType(Enum):
+#    UVR61_3 = 0x5A
+#    UVR1611 = 0x76
+
+
+class LoggingCriterion(object):
+    def __init__(self, raw_data):
+        self.raw = raw_data
+        if 5 <= raw_data <= 120:
+            self.temperature_difference_k = raw_data / 10.0
+            self.time_interval_s = None
+        elif 129 <= raw_data <= 248:
+            self.temperature_difference_k = None
+            self.time_interval_s = (raw_data - 128) * 20.0
+        else:
+            raise Exception("Invalid logging criterion")
+
+    def __str__(self):
+        if self.temperature_difference_k:
+            return "{}K".format(self.temperature_difference_k)
+        else:
+            return "{}s".format(self.time_interval_s)
 
 
 class OneDlAddress(object):  # TODO is the conversion between byte array and integer really correct?!
@@ -69,7 +99,7 @@ class OneDlHeader(object):
     def __init__(self, raw_data):
         self.identifier = raw_data[0]
         self.version = raw_data[1]
-        self.timestamp = unpack("<I", raw_data[2:5] + bytearray([0]))[0]
+        self.timestamp_s = unpack("<I", raw_data[2:5] + bytearray([0]))[0] * 10
         # self.length = raw_data[5]
         self.start = OneDlAddress(raw_data[6:9])
         self.end = OneDlAddress(raw_data[9:12])
@@ -83,9 +113,9 @@ class OneDlHeader(object):
 
     def __str__(self):
         str = "{\n"
-        str += "  identifier: {}\n".format(self.identifier)
-        str += "  version:    {}\n".format(self.version)
-        str += "  timestamp:  {}\n".format(self.timestamp)
+        str += "  identifier: 0x{:02X}\n".format(self.identifier)
+        str += "  version:    0x{:02X}\n".format(self.version)
+        str += "  timestamp:  {}s\n".format(self.timestamp_s)
         # str += "  length:     {}\n".format(self.length)
         str += "  start:      {}\n".format(self.start)
         str += "  end:        {}\n".format(self.end)
@@ -160,7 +190,7 @@ class Uvr1611Data(object):
         # self.solar_2_kwh = unpack(">H", raw_data[51:53])
         # self.solar_2_mwh = unpack(">H", raw_data[53:55])
         self.datetime = DateTime(raw_data[55:61])
-        self.timestamp = unpack("<I", raw_data[61:64] + bytearray([0]))[0]
+        self.timestamp_s = unpack("<I", raw_data[61:64] + bytearray([0]))[0] * 10
         checksum = raw_data[64]
         checksum_calc = sum(raw_data[0:64]) % 0x100
         if checksum != checksum_calc:
@@ -169,7 +199,7 @@ class Uvr1611Data(object):
     def __str__(self):
         str = "{\n"
         str += "  datetime:     {}\n".format(self.datetime)
-        str += "  timestamp:    {}\n".format(self.timestamp)
+        str += "  timestamp:    {}s\n".format(self.timestamp_s)
         str += "  inputs:       {}\n".format([x.value for x in self.inputs])
         str += "  outputs:      {}\n".format([x for x in self.outputs])
         str += "  pump_speeds:  {}\n".format([x.value for x in self.pump_speeds])

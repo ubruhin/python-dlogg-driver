@@ -82,7 +82,7 @@ class DLoggDbUpload(object):
         columns.append("datetime")
         values.append("'{}-{}-{} {}:{}:{}'".format(dt.year, dt.month, dt.day, dt.hours, dt.minutes, dt.seconds))
         columns.append("timestamp")
-        values.append("'{}'".format(data.timestamp))
+        values.append("'{}'".format(data.timestamp_s))
         for i in range(0, 16):
             columns.append("input_{}".format(i + 1))
             values.append("'{}'".format(data.inputs[i].value))
@@ -109,7 +109,7 @@ if __name__ == "__main__":
         log.info("Number of samples: {}".format(header.get_sample_count()))
         data = device.fetch_data_range(header.start, 10)
         device.fetch_end()
-        log.info("Data 0: {}".format(data[0])
+        log.info("Data 0: {}".format(data[0]))
         with DLoggDbUpload('staging-server', 3306, 'dlogg', 'dlogg', 'dlogg') as upload:
             upload.create_tables()
             upload.insert_data(data)
