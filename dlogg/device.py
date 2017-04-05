@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# python-dlogg - Python package to read data from a USB D-LOGG module
+# python-dlogg - Python package to read data from a USB D-LOGG device
 # Copyright (C) 2017 U. Bruhin
 # https://github.com/ubruhin/python-dlogg
 #
@@ -25,7 +25,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class DLoggModule(object):
+class DLoggDevice(object):
 
     def __init__(self, port):
         self._port = port
@@ -34,7 +34,7 @@ class DLoggModule(object):
         self._serial.rts = False
         log.info("Opened port {}".format(self._port))
         mode = self.get_mode()
-        log.info("Mode of connected module: {}".format(mode))
+        log.info("Mode of connected device: {}".format(mode))
         if mode != Mode.ONE_DL:
             raise Exception("Mode is not supported")
 
@@ -129,7 +129,7 @@ class DLoggModule(object):
 if __name__ == "__main__":
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=logging.DEBUG)
 
-    with DLoggModule("/dev/ttyUSB0") as device:
+    with DLoggDevice("/dev/ttyUSB0") as device:
         log.info("Type: {}".format(device.get_type()))
         log.info("Firmware: {}".format(device.get_firmware_version()))
         log.info("Mode: {}".format(device.get_mode()))

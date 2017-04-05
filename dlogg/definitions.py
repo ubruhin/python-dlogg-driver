@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# python-dlogg - Python package to read data from a D-LOGG module
+# python-dlogg - Python package to read data from a D-LOGG device
 # Copyright (C) 2017 U. Bruhin
 # https://github.com/ubruhin/python-dlogg
 #

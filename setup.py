@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# python-dlogg - Python package to read data from a D-LOGG module
+# python-dlogg - Python package to read data from a D-LOGG device
 # Copyright (C) 2017 U. Bruhin
 # https://github.com/ubruhin/python-dlogg
 #
@@ -30,7 +30,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='dlogg',
     version='0.1.0',
-    description='Library to read data from a Technische Alternative D-LOGG module.',
+    description='Library to read data from a Technische Alternative D-LOGG device.',
     long_description=long_description,
     url='https://github.com/ubruhin/python-dlogg',
     author='U. Bruhin',

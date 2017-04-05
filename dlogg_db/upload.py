@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# python-dlogg - Python package to read data from a USB D-LOGG module
+# python-dlogg - Python package to read data from a USB D-LOGG device
 # Copyright (C) 2017 U. Bruhin
 # https://github.com/ubruhin/python-dlogg
 #
@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from dlogg import DLoggModule
+from dlogg import DLoggDevice
 from dlogg.definitions import *
 from binascii import hexlify
 import MySQLdb as mdb
@@ -103,7 +103,7 @@ class DLoggDbUpload(object):
 if __name__ == "__main__":
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=logging.DEBUG)
 
-    with DLoggModule("/dev/ttyUSB0") as device:
+    with DLoggDevice("/dev/ttyUSB0") as device:
         header = device.get_header()
         log.info("Number of samples: {}".format(header.get_sample_count()))
         data = device.fetch_data_range(header.start, 10)
