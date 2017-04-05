@@ -22,7 +22,6 @@ from struct import unpack
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class Cmd(int):

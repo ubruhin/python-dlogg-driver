@@ -23,7 +23,6 @@ from definitions import *
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class DLoggModule(object):
