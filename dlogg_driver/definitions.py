@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# python-dlogg - Python package to read data from a D-LOGG device
+# python-dlogg-driver - Python package to read data from a D-LOGG device
 # Copyright (C) 2017 U. Bruhin
-# https://github.com/ubruhin/python-dlogg
+# https://github.com/ubruhin/python-dlogg-driver
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
