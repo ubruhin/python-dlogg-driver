@@ -28,7 +28,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='dlogg',
+    name='dlogg-driver',
     version='0.1.0',
     description='Library to read data from a Technische Alternative D-LOGG device.',
     long_description=long_description,
@@ -43,6 +43,6 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     keywords='technische alternative, dlogg, d-logg, d logg',
-    packages=['dlogg', 'dlogg_db'],
-    install_requires=['enum34', 'pyserial', 'mysql-python'],
+    packages=['dlogg'],
+    install_requires=['enum34', 'pyserial'],
 )
