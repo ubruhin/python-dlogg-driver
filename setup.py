@@ -39,7 +39,7 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
         'Programming Language :: Python :: 2.7',
     ],
     keywords='technische alternative, dlogg, d-logg, d logg',
