@@ -31,5 +31,14 @@ Usage
       device.fetch_end()
 
 
+Credits
+-------
+
+- Many thanks to `Technische Alternative`_ for allowing me to create and publish
+  this package under a free software license!
+- Thanks also to H. Römer for publishing `d-logg-linux`_.
+
+
 .. _`Technische Alternative`: http://www.ta.co.at/
 .. _`D-LOGG`: http://www.ta.co.at/de/produkte/pc-anbindung/datenkonverter-d-logg.html
+.. _`d-logg-linux`: http://d-logg-linux.roemix.de/
