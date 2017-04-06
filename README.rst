@@ -1,7 +1,7 @@
 python-dlogg-driver
 ===================
 
-Python package to read data from a `Technische Alternative`_ `D-LOGG`_ device.
+Unofficial python package to read data from a `Technische Alternative`_ `D-LOGG`_ device.
 
 
 Installation
