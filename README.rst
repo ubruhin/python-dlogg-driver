@@ -20,14 +20,15 @@ Usage
   from dlogg_driver import DLoggDevice
   
   with DLoggDevice("/dev/ttyUSB0") as device:
-      print "Type: {}".format(device.get_type())
-      print "Firmware: {}".format(device.get_firmware_version())
-      print "Mode: {}".format(device.get_mode())
-      print "Logging criterion: {}".format( device.get_logging_criterion())
+      print u"Type: {}".format(device.get_type())
+      print u"Firmware: {}".format(device.get_firmware_version())
+      print u"Mode: {}".format(device.get_mode())
+      print u"Logging criterion: {}".format(unicode(device.get_logging_criterion()))
+      print u"Current data: {}".format(unicode(device.get_current_data()))
       header = device.get_header()
-      print "Number of available samples: {}".format(header.get_sample_count())
+      print u"Number of available samples: {}".format(header.get_sample_count())
       data = device.fetch_data_range(header.start, 1)
-      print "Data [0]: {}".format(data[0])
+      print u"Data [0]: {}".format(unicode(data[0]))
       device.fetch_end()
 
 

@@ -29,7 +29,7 @@ class DLoggDevice(object):
 
     def __init__(self, port):
         self._port = port
-        self._serial = serial.Serial(port=self._port, baudrate=115200, timeout=5.0)
+        self._serial = serial.Serial(port=self._port, baudrate=115200, timeout=1.0)
         self._serial.dtr = True
         self._serial.rts = False
         log.info("Opened port {}".format(self._port))
@@ -49,11 +49,12 @@ class DLoggDevice(object):
         log.info("Closed port {}".format(self._port))
 
     def get_type(self):
-        data = self._transceive([0x20, 0x10, 0x18, 0x00, 0x00, 0x00, 0x00], 5,
-                                tx_checksum=True, rx_checksum=True)
+        data = self._transceive([0x20, 0x10, 0x18, 0x00, 0x00, 0x00, 0x00], 5, checksum=True)
+        time.sleep(0.1)  # following commands will fail without this...
         if data[0] != 0x21 or data[1] != 0x43:
             raise IOError("Unexpected response")
-        time.sleep(0.1)  # following commands will fail without this...
+        if sum(data[2:-1]) & 0xFF != data[-1]:
+            raise IOError("Checksum mismatch")
         return Type(data[2])
 
     def get_firmware_version(self):
@@ -77,17 +78,14 @@ class DLoggDevice(object):
     def get_header(self):
         return OneDlHeader(self._transceive([Cmd.GET_HEADER], 13))
 
-    # def get_current_data(self):
-    #     data = self._transceive([Cmd.GET_CURRENT_DATA], 57)
-    #     if data[0] != 0x80:
-    #         raise IOError("Unexpected response")
-    #     return data
+    def get_current_data(self):
+        return Uvr1611CurrentData(self._transceive([Cmd.GET_CURRENT_DATA], 57))
 
     def fetch_data(self, address):
         tx_data = [Cmd.GET_DATA_RANGE]
         tx_data += address.array
-        tx_data += [0x01]   # count of data frames to read(?)
-        return Uvr1611Data(self._transceive(tx_data, 65, tx_checksum=True))
+        tx_data += [0x01]   # count of data frames to read
+        return Uvr1611MemoryData(self._transceive(tx_data, 65, checksum=True))
 
     def fetch_data_range(self, start_addr, length):
         data = []
@@ -103,14 +101,21 @@ class DLoggDevice(object):
             raise IOError("Unexpected response")
         log.debug("Fetch end")
 
+    def fetch_all_data(self):
+        try:
+            header = self.get_header()
+            return self.fetch_data_range(header.start, header.get_sample_count())
+        finally:
+            self.fetch_end()
+
     def clear_memory(self):
         data = self._transceive([Cmd.CLEAR_MEMORY], 1)
         if data[0] != Cmd.CLEAR_MEMORY:
             raise IOError("Unexpected response")
         log.debug("Memory cleared")
 
-    def _transceive(self, tx_data, rx_len, tx_checksum=False, rx_checksum=False):
-        if tx_checksum:
+    def _transceive(self, tx_data, rx_len, checksum=False):
+        if checksum:
             tx_data += [sum(tx_data) % 0x100]
         self._serial.flushInput()
         self._serial.write(tx_data)
@@ -118,11 +123,6 @@ class DLoggDevice(object):
         log.debug("Transceive: {} --> {}".format([hex(c) for c in tx_data], [hex(c) for c in rx_data]))
         if len(rx_data) != rx_len:
             raise IOError("Received {} bytes instead of {}".format(len(rx_data), rx_len))
-        # if rx_checksum:
-        #     checksum = rx_data[-1]
-        #     checksum_calc = sum(rx_data[0:-1]) % 0x100
-        #     if checksum != checksum_calc:
-        #         raise IOError("Wrong checksum received")
         return rx_data
 
 
@@ -130,18 +130,18 @@ if __name__ == "__main__":
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=logging.DEBUG)
 
     with DLoggDevice("/dev/ttyUSB0") as device:
-        log.info("Type: {}".format(device.get_type()))
-        log.info("Firmware: {}".format(device.get_firmware_version()))
-        log.info("Mode: {}".format(device.get_mode()))
+        log.info(u"Type: {}".format(device.get_type()))
+        log.info(u"Firmware: {}".format(device.get_firmware_version()))
+        log.info(u"Mode: {}".format(device.get_mode()))
         logging_criterion = device.get_logging_criterion()
-        log.info("Logging criterion: {}".format(logging_criterion))
+        log.info(u"Logging criterion: {}".format(unicode(logging_criterion)))
         device.set_logging_criterion(logging_criterion)
         header = device.get_header()
-        log.info("Header: {}".format(header))
-        log.info("Number of samples: {}".format(header.get_sample_count()))
-        # log.info("Current data: {}".format(device.get_current_data()))
-        log.info("Data 0: {}".format(device.fetch_data(header.start)))
-        device.fetch_end()
-        #device.clear_memory()
+        log.info(u"Header: {}".format(unicode(header)))
+        log.info(u"Number of samples: {}".format(header.get_sample_count()))
+        log.info(u"Current data: {}".format(unicode(device.get_current_data())))
+        log.info(u"Data 0: {}".format(unicode(device.fetch_data(header.start))))
         # all_data = device.fetch_data_range(header.start, header.get_sample_count())
-        # log.info("Fetched {} samples".format(header.get_sample_count()))
+        # log.info(u"Fetched {} samples".format(header.get_sample_count()))
+        device.fetch_end()
+        # device.clear_memory()
