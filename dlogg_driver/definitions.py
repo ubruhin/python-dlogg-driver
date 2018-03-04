@@ -148,7 +148,6 @@ class InputData(object):
         self.type = raw_data[1] >> 4
         word = unpack("<h", raw_data)[0]
         self.type = InputDataSignalType((word & 0x7000) >> 12)
-        sign = -1.0 if word & 0x8000 else 1.0
         if self.type == InputDataSignalType.UNUSED:
             self.value = 0
             self.unit = u""
@@ -156,17 +155,29 @@ class InputData(object):
             self.value = 1 if word & 0x8000 else 0
             self.unit = u""
         elif self.type == InputDataSignalType.TEMPERATURE:
-            self.value = sign * (word & 0x0FFF) / 10.0
+            if word & 0x8000:
+                self.value = (((word & 0x0FFF) ^ 0x0FFF) + 0x01) / -10.0
+            else:
+                self.value = (word & 0x0FFF) / 10.0
             self.unit = u"°C"
         elif self.type == InputDataSignalType.ROOM_TEMPERATURE:
             self.room = (word & 0x600) >> 9
-            self.value = sign * (word & 0x01FF) / 10.0
+            if word & 0x8000:
+                self.value = (((word & 0x01FF) ^ 0x01FF) + 0x01) / -10.0
+            else:
+                self.value = (word & 0x01FF) / 10.0
             self.unit = u"°C"
         elif self.type == InputDataSignalType.MASSFLOW:
-            self.value = sign * (word & 0x0FFF) * 4.0
+            if word & 0x8000:
+                self.value = (((word & 0x0FFF) ^ 0x0FFF) + 0x01) * -4.0
+            else:
+                self.value = (word & 0x0FFF) * 4.0
             self.unit = u"l/h"
         elif self.type == InputDataSignalType.SUNLOAD:
-            self.value = sign * (word & 0x0FFF)
+            if word & 0x8000:
+                self.value = -(((word & 0x0FFF) ^ 0x0FFF) + 0x01)
+            else:
+                self.value = (word & 0x0FFF)
             self.unit = u"W/m²"
         else:
             raise Exception("Unknown input type: {}".format(self.type))
