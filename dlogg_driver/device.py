@@ -117,14 +117,18 @@ class DLoggDevice(object):
     def _transceive(self, tx_data, expected_rx_len, checksum=False):
         if checksum:
             tx_data += [sum(tx_data) % 0x100]
-        expected_lengths = (expected_rx_len,) if isinstance(expected_rx_len, int) else tuple(sorted(set(expected_rx_len)))
+        if isinstance(expected_rx_len, int):
+            expected_lengths = (expected_rx_len,)
+        else:
+            expected_lengths = tuple(sorted(set(expected_rx_len)))
+        expected_lengths_text = "/".join(map(str, expected_lengths))
         self._serial.flushInput()
         self._serial.write(bytearray(tx_data))
         rx_data = bytearray(self._serial.read(max(expected_lengths)))
         log.debug("Transceive: {} --> {}".format([hex(c) for c in tx_data], [hex(c) for c in rx_data]))
         if len(rx_data) not in expected_lengths:
             raise IOError("Received {} bytes instead of {}".format(
-                len(rx_data), "/".join([str(x) for x in expected_lengths])
+                len(rx_data), expected_lengths_text
             ))
         return rx_data
 
