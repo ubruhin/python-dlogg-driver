@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import time
 import serial
-from definitions import *
+from .definitions import *
 import logging
 
 log = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class DLoggDevice(object):
         return OneDlHeader(self._transceive([Cmd.GET_HEADER], 13))
 
     def get_current_data(self):
-        return Uvr1611CurrentData(self._transceive([Cmd.GET_CURRENT_DATA], 57))
+        return Uvr1611CurrentData(self._transceive([Cmd.GET_CURRENT_DATA], (55, 57)))
 
     def fetch_data(self, address):
         tx_data = [Cmd.GET_DATA_RANGE]
@@ -117,12 +117,15 @@ class DLoggDevice(object):
     def _transceive(self, tx_data, rx_len, checksum=False):
         if checksum:
             tx_data += [sum(tx_data) % 0x100]
+        expected_lengths = (rx_len,) if isinstance(rx_len, int) else tuple(sorted(set(rx_len)))
         self._serial.flushInput()
-        self._serial.write(tx_data)
-        rx_data = bytearray(self._serial.read(rx_len))
+        self._serial.write(bytearray(tx_data))
+        rx_data = bytearray(self._serial.read(max(expected_lengths)))
         log.debug("Transceive: {} --> {}".format([hex(c) for c in tx_data], [hex(c) for c in rx_data]))
-        if len(rx_data) != rx_len:
-            raise IOError("Received {} bytes instead of {}".format(len(rx_data), rx_len))
+        if len(rx_data) not in expected_lengths:
+            raise IOError("Received {} bytes instead of {}".format(
+                len(rx_data), "/".join([str(x) for x in expected_lengths])
+            ))
         return rx_data
 
 

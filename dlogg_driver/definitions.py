@@ -239,7 +239,7 @@ class Uvr1611Data(object):
 class Uvr1611CurrentData(Uvr1611Data):
     def __init__(self, raw_data):
         Uvr1611Data.__init__(self, raw_data, offset=1)
-        if raw_data[0] != 0x80:
+        if raw_data[0] not in (0x80, 0x90):
             raise IOError("Unexpected data")
 
 
