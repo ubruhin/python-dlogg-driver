@@ -114,10 +114,10 @@ class DLoggDevice(object):
             raise IOError("Unexpected response")
         log.debug("Memory cleared")
 
-    def _transceive(self, tx_data, rx_len, checksum=False):
+    def _transceive(self, tx_data, expected_rx_len, checksum=False):
         if checksum:
             tx_data += [sum(tx_data) % 0x100]
-        expected_lengths = (rx_len,) if isinstance(rx_len, int) else tuple(sorted(set(rx_len)))
+        expected_lengths = (expected_rx_len,) if isinstance(expected_rx_len, int) else tuple(sorted(set(expected_rx_len)))
         self._serial.flushInput()
         self._serial.write(bytearray(tx_data))
         rx_data = bytearray(self._serial.read(max(expected_lengths)))
